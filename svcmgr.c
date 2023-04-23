@@ -17,11 +17,6 @@
 
 #define MAX_EVENTS 10
 
-static const uint8_t key_mappings[KEY_MAX + 1] = {
-  [0 ... KEY_MAX] = 0x0,
-};
-
-
 int main(int argc, char **argv) {
 
   struct epoll_event events[MAX_EVENTS];
@@ -42,8 +37,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  uint8_t report[8];
-
+  printf("svcmgr started ...\n");
   while (1) {
     int nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
     if (nfds < 0) {
@@ -51,8 +45,6 @@ int main(int argc, char **argv) {
       perror("epoll_wait failed");
       return 2;
     }
-
-    memset(report, 0, 8);
 
     for (int i=0; i < nfds; i++) {
       struct input_event ev[64];
@@ -63,13 +55,20 @@ int main(int argc, char **argv) {
         type = ev[j].type;
         code = ev[j].code;
         //printf("Event: time %ld.%06ld, ", ev[j].time.tv_sec, ev[j].time.tv_usec);
-        if (type == EV_KEY) {
-          if (key_mappings[code] == 0) {
-            printf("code %d %d report:%x\n", code, ev[j].value, key_mappings[code]);
+        if (type == EV_KEY && code == KEY_POWER) {
+
+          if ( ev[j].value == 1) {
+            printf("KEY_POWER Pressed\n");
+
+           } else if ( ev[j].value == 0) { 
+            printf("KEY_POWER Released\n");
+
           }
-        }
-      }
-    }
-  }
+ 
+        } /* if */
+      } /* for */
+    } /* for */
+  } /* while */
+
   return 0;
 }
