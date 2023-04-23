@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 // see also: https://www.devever.net/~hl/usbnkro
 // https://github.com/librerpi/rpi-tools/blob/master/keyboard-proxy/main.c
@@ -18,6 +19,8 @@
 #define MAX_EVENTS 10
 
 int main(int argc, char **argv) {
+
+  bool is_running = false;
 
   struct epoll_event events[MAX_EVENTS];
   int fd = open("/dev/input/event0", O_RDWR);
@@ -50,18 +53,22 @@ int main(int argc, char **argv) {
       struct input_event ev[64];
       int rd = read(events[i].data.fd, ev, sizeof(ev));
       assert(rd > ((signed int)sizeof(struct input_event)));
+
       for (int j=0; j < rd / ((signed int)sizeof(struct input_event)); j++) {
         unsigned int type, code;
         type = ev[j].type;
         code = ev[j].code;
         //printf("Event: time %ld.%06ld, ", ev[j].time.tv_sec, ev[j].time.tv_usec);
-        if (type == EV_KEY && code == KEY_POWER) {
 
-          if ( ev[j].value == 1) {
-            printf("KEY_POWER Pressed\n");
+        if (type == EV_KEY && code == KEY_POWER && ev[j].value == 0) {
 
-           } else if ( ev[j].value == 0) { 
-            printf("KEY_POWER Released\n");
+          if ( is_running == false ) {
+            is_running = true;
+            printf("SVC : resume\n");
+
+          } else {
+            is_running = false;
+            printf("SVC : suspend\n");
 
           }
  
